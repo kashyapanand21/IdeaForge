@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -10,25 +11,17 @@ use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureModels();
     }
 
-    /**
-     * Configure default behaviors for production-ready applications.
-     */
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
@@ -46,5 +39,16 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    protected function configureModels(): void
+    {
+        // In non-production: crash loudly on N+1, missing attributes,
+        // and unguarded mass assignment — so we catch bugs during development
+        Model::shouldBeStrict(! app()->isProduction());
+
+        // Automatically eager load relationships when accessed on collections
+        // prevents N+1 queries without forcing us to always remember with()
+        Model::automaticallyEagerLoadRelationships();
     }
 }

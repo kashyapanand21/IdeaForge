@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\IdeaVoteFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * @property int $id
+ * @property int $idea_id
+ * @property int $user_id
+ * @property string $vote
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
+#[Fillable(['idea_id', 'user_id', 'vote'])]
+class IdeaVote extends Model
+{
+    /** @use HasFactory<IdeaVoteFactory> */
+    use HasFactory;
+
+    public function idea(): BelongsTo
+    {
+        return $this->belongsTo(Idea::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        // The user who cast this vote
+        return $this->belongsTo(User::class);
+    }
+
+    public function isUpvote(): bool
+    {
+        return $this->vote === 'up';
+    }
+
+    public function isDownvote(): bool
+    {
+        return $this->vote === 'down';
+    }
+}
