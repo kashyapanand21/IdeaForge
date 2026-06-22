@@ -28,7 +28,7 @@ export default function AppLayout({ children, active }: Props) {
     const { auth } = usePage<SharedProps>().props;
 
     // controls mobile sidebar open/close
-    const [sidebarOpen, setSidebarOpen,] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     return (
         <div className="min-h-screen bg-background">
@@ -48,7 +48,6 @@ export default function AppLayout({ children, active }: Props) {
                 flex flex-col py-6
                 transition-transform duration-300 ease-in-out
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                lg:translate-x-0
             `}>
                 {/* Logo */}
                 <div className="px-6 mb-8 flex justify-between">
@@ -72,7 +71,7 @@ export default function AppLayout({ children, active }: Props) {
                 <nav className="flex-1 space-y-0.5">
                     {navItems.map((item) => {
                         const isActive = active === item.key;
-                        
+
                         return (
                             <Link
                                 key={item.key}
@@ -110,10 +109,18 @@ export default function AppLayout({ children, active }: Props) {
             </aside>
 
             {/* ── Top bar ── */}
-            <header className="fixed top-0 right-0 h-16 z-40
-                bg-background/80 backdrop-blur-md border-b border-outline-variant
-                flex items-center justify-between px-6
-                w-full lg:w-[calc(100%-16rem)]">
+            <header
+                className={`
+                    fixed top-0 right-0 h-16 z-40
+                    bg-background/80 backdrop-blur-md
+                    border-b border-outline-variant
+                    flex items-center justify-between px-6
+                    transition-all duration-300
+                    ${sidebarOpen
+                        ? 'lg:w-[calc(100%-16rem)]'
+                        : 'w-full'}
+                `}
+            >
 
                 {/* Hamburger — mobile only */}
                 <button
@@ -173,7 +180,13 @@ export default function AppLayout({ children, active }: Props) {
             {/* ── Main content ── */}
             {/* lg:ml-64 pushes content right of the fixed sidebar on desktop */}
             {/* pt-16 pushes content below the fixed topbar */}
-            <main className="lg:ml-64 pt-16 min-h-screen">
+            <main
+                className={`
+                    pt-16 min-h-screen
+                    transition-all duration-300
+                    ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}
+                `}
+            >
                 {children}
             </main>
         </div>

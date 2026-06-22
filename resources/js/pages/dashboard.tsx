@@ -69,12 +69,12 @@ export default function Dashboard() {
     <AppLayout active="dashboard">
 
       <Head title="Dashboard | IdeaForge" />
-
-      <div className="flex min-h-screen bg-[#fcf9f5] text-on-surface font-sans">
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      {/* <div className="flex min-h-screen bg-[#fcf9f5] text-on-surface font-sans">
 
         <main className="ml-64 min-h-screen w-full">
 
-          <div className="pt-32 pb-12 px-10 max-w-[1280px] mx-auto">
+          <div className="pt-32 pb-12 px-10 max-w-[1280px] mx-auto"> */}
             <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
               <div>
                 <h2 className="text-4xl font-bold text-[#1c1c1a] mb-2 tracking-tight">Hackathon Hub</h2>
@@ -122,8 +122,8 @@ export default function Dashboard() {
                 </button>
               </div>
             </div>
-          </div>
-        </main>
+          {/* </div>
+        </main> */}
 
         <button className="fixed bottom-6 right-6 w-16 h-16 bg-[#9a4601] text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center z-50 md:hidden">
           <span className="material-symbols-outlined text-3xl">add</span>
