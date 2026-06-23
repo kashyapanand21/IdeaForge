@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginController;
 
 Route::inertia('/', 'welcome')->name('home');
 
@@ -29,4 +30,18 @@ Route::middleware('auth')->group(function () {
 
     Route::inertia('/profile', 'profile/index')->name('profile.index');
     Route::patch('/profile', fn() => redirect('/profile'))->name('profile.update');
+});
+
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::post('/register', [RegisterController::class, 'store']);
+
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store']);
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+    // ... rest of your auth routes
 });
