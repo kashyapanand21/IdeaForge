@@ -54,9 +54,9 @@ Route::middleware('auth')->group(function () {
     Route::inertia('/ideas/create', 'ideas/create')->name('ideas.create');
     Route::inertia('/ideas/1', 'ideas/show')->name('ideas.show');
 
-    Route::inertia('/teams', 'teams/show')->name('teams.index');
-    Route::inertia('/teams/1', 'teams/show')->name('teams.show');
-    Route::inertia('/teams/1/settings', 'teams/settings')->name('teams.settings');
+    // Route::inertia('/teams', 'teams/show')->name('teams.index');
+    // Route::inertia('/teams/1', 'teams/show')->name('teams.show');
+    // Route::inertia('/teams/1/settings', 'teams/settings')->name('teams.settings');
 
     Route::inertia('/hackathons', 'hackathons/index')->name('hackathons.index');
     Route::inertia('/hackathons/1', 'hackathons/show')->name('hackathons.show');
@@ -66,3 +66,32 @@ Route::middleware('auth')->group(function () {
     Route::inertia('/profile', 'profile/index')->name('profile.index');
     Route::patch('/profile', fn () => redirect('/profile'))->name('profile.update');
 });
+
+
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TeamInviteController;
+use App\Http\Controllers\TeamMemberController;
+
+// Teams
+Route::resource('teams', TeamController::class);
+Route::post('/teams/{team}/transfer-ownership', [TeamController::class, 'transferOwnership'])
+    ->name('teams.transfer-ownership');
+
+// Invites — sent by team admins/owners
+Route::post('/teams/{team}/invites', [TeamInviteController::class, 'store'])
+    ->name('teams.invites.store');
+Route::delete('/teams/{team}/invites/{invite}', [TeamInviteController::class, 'destroy'])
+    ->name('teams.invites.destroy');
+
+// Invite responses — visited by the invited person
+// These are outside the team context because the invited person may not be a member yet
+Route::get('/invites/{token}/accept', [TeamInviteController::class, 'accept'])
+    ->name('invites.accept');
+Route::get('/invites/{token}/decline', [TeamInviteController::class, 'decline'])
+    ->name('invites.decline');
+
+// Member management
+Route::delete('/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])
+    ->name('teams.members.destroy');
+Route::delete('/teams/{team}/leave', [TeamMemberController::class, 'leave'])
+    ->name('teams.leave');

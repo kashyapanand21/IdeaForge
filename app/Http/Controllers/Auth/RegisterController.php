@@ -24,9 +24,6 @@ class RegisterController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            // Hash::make() bcrypt-hashes the password
-            // but since User casts password => 'hashed', you could also just pass plain text
-            // Hash::make() here is explicit and clearer — either works
             'password' => Hash::make($request->password),
         ]);
 

@@ -1,94 +1,147 @@
-import { Head } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
+import type { FormEventHandler } from 'react';
 import AppLayout from '@/layouts/AppLayout';
+import type { Auth } from '@/types/auth';
+import type { Team, TeamInvite, TeamMember } from '@/types/models';
 
-export default function TeamSettings() {
+interface Props {
+    team: Team & {
+        members: TeamMember[]
+    }
+    invites: TeamInvite[]
+}
+
+interface SharedProps {
+    auth: Auth
+    [key: string]: unknown
+}
+
+export default function TeamSettings({ team, invites }: Props) {
+    const { auth } = usePage<SharedProps>().props;
+    const isOwner = team.owner_id === auth.user.id;
+
+    const teamForm = useForm({
+        name: team.name,
+        description: team.description ?? '',
+    });
+
+    const inviteForm = useForm({
+        email: '',
+        role: 'member' as 'admin' | 'member',
+    });
+
+    const submitTeam: FormEventHandler = (e) => {
+        e.preventDefault();
+        teamForm.patch(route('teams.update', team.id));
+    };
+
+    const submitInvite: FormEventHandler = (e) => {
+        e.preventDefault();
+        inviteForm.post(route('teams.invites.store', team.id), {
+            onSuccess: () => inviteForm.reset(),
+        });
+    };
+
+    const removeMember = (userId: number) => {
+        if (confirm('Remove this member from the team?')) {
+            router.delete(route('teams.members.destroy', { team: team.id, user: userId }));
+        }
+    };
+
+    const revokeInvite = (inviteId: number) => {
+        router.delete(route('teams.invites.destroy', { team: team.id, invite: inviteId }));
+    };
+
+    const deleteTeam = () => {
+        if (confirm('This will permanently delete the team and all its data. Are you sure?')) {
+            router.delete(route('teams.destroy', team.id));
+        }
+    };
+
     return (
         <AppLayout active="teams">
-            <Head title="Team Settings | IdeaForge" />
-            <div className="max-w-6xl mx-auto px-6 py-8">
+            <Head title={`${team.name} Settings | IdeaForge`} />
+            <div className="max-w-5xl mx-auto px-6 py-8">
 
-                {/* Breadcrumb */}
-                <div className="flex items-center gap-2 text-on-surface-variant text-sm mb-2">
-                    <span>My Teams</span>
-                    <span className="material-symbols-outlined text-base">chevron_right</span>
-                    <span className="text-primary font-medium">Team Settings</span>
+                <div className="mb-8">
+                    <p className="text-sm text-on-surface-variant mb-1">
+                        <a href={route('teams.index')} className="hover:text-primary">Teams</a>
+                        {' / '}
+                        <a href={route('teams.show', team.id)} className="hover:text-primary">{team.name}</a>
+                        {' / Settings'}
+                    </p>
+                    <h1 className="text-3xl font-bold text-on-surface">Team Settings</h1>
                 </div>
-                <h1 className="text-3xl font-bold text-on-surface mb-8">Settings</h1>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                    {/* ── Left column ── */}
                     <div className="lg:col-span-8 space-y-6">
 
                         {/* Team profile */}
-                        <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/20">
-                            <div className="flex items-center gap-6 mb-6">
-                                <div className="relative">
-                                    <div className="w-24 h-24 rounded-2xl bg-surface-container-high flex items-center justify-center border border-outline-variant/30 overflow-hidden">
-                                        <span className="material-symbols-outlined text-4xl text-on-surface-variant">group</span>
-                                    </div>
-                                    <button className="absolute -bottom-2 -right-2 bg-primary text-on-primary p-1.5 rounded-lg shadow-lg hover:scale-105 transition-transform">
-                                        <span className="material-symbols-outlined text-sm">edit</span>
-                                    </button>
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-semibold">Foundry Collective</h2>
-                                    <p className="text-on-surface-variant text-sm">Team ID: foundry_2024_01</p>
-                                </div>
-                            </div>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-on-surface-variant mb-1.5">Team Name</label>
+                        <section className="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 shadow-sm">
+                            <h2 className="text-xl font-semibold mb-6">Team Profile</h2>
+                            <form onSubmit={submitTeam} className="space-y-5">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-on-surface-variant">Team Name</label>
                                     <input
                                         type="text"
-                                        defaultValue="Foundry Collective"
-                                        className="w-full p-3 bg-background border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm transition-all"
+                                        value={teamForm.data.name}
+                                        onChange={(e) => teamForm.setData('name', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-white text-on-surface outline-none focus:ring-2 focus:ring-primary-container focus:border-primary"
                                     />
+                                    {teamForm.errors.name && (
+                                        <p className="text-xs text-error">{teamForm.errors.name}</p>
+                                    )}
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-on-surface-variant mb-1.5">Description</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-on-surface-variant">Description</label>
                                     <textarea
-                                        rows={4}
-                                        defaultValue="A multi-disciplinary group of builders focused on creating high-impact digital tools for the modern creator economy."
-                                        className="w-full p-3 bg-background border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm transition-all resize-none"
+                                        rows={3}
+                                        value={teamForm.data.description}
+                                        onChange={(e) => teamForm.setData('description', e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-outline-variant bg-white text-on-surface outline-none focus:ring-2 focus:ring-primary-container focus:border-primary resize-none"
                                     />
                                 </div>
                                 <div className="flex justify-end">
-                                    <button className="px-6 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:opacity-90 transition-all">
-                                        Save Changes
+                                    <button
+                                        type="submit"
+                                        disabled={teamForm.processing}
+                                        className="px-6 py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-60"
+                                    >
+                                        {teamForm.processing ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>
-                            </div>
+                            </form>
                         </section>
 
                         {/* Members */}
-                        <section className="bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/20">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-semibold">Team Members</h3>
-                                <span className="text-sm text-on-surface-variant">4 Active Members</span>
-                            </div>
+                        <section className="bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/30 shadow-sm">
+                            <h2 className="text-xl font-semibold mb-6">
+                                Members
+                                <span className="ml-2 text-sm font-normal text-on-surface-variant">
+                                    {team.members.length} total
+                                </span>
+                            </h2>
                             <div className="space-y-3">
-                                {[
-                                    { name: 'Marcus Thorne', email: 'marcus@foundry.cc', role: 'Owner', roleColor: 'bg-secondary-container text-on-secondary-container' },
-                                    { name: 'Sarah Jenkins', email: 'sarah.j@foundry.cc', role: 'Admin', roleColor: 'bg-primary-container/20 text-primary' },
-                                    { name: 'David Chen', email: 'd.chen@foundry.cc', role: 'Member', roleColor: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
-                                ].map((member) => (
-                                    <div key={member.email} className="flex items-center justify-between p-4 border border-outline-variant/20 rounded-lg hover:bg-surface-container-low transition-colors">
+                                {team.members.map((member) => (
+                                    <div key={member.id} className="flex items-center justify-between p-3 border border-outline-variant/20 rounded-lg">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-on-surface-variant text-sm">
-                                                {member.name.charAt(0)}
+                                            <div className="w-9 h-9 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-sm text-on-surface-variant">
+                                                {member.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
                                                 <p className="text-sm font-semibold text-on-surface">{member.name}</p>
                                                 <p className="text-xs text-on-surface-variant">{member.email}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${member.roleColor}`}>
-                                                {member.role}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xs font-bold uppercase text-outline">
+                                                {member.pivot.role}
                                             </span>
-                                            {member.role !== 'Owner' && (
-                                                <button className="text-on-surface-variant hover:text-error transition-colors p-1 rounded-full hover:bg-error-container/50">
+                                            {member.pivot.role !== 'owner' && (
+                                                <button
+                                                    onClick={() => removeMember(member.id)}
+                                                    className="text-on-surface-variant hover:text-error transition-colors p-1"
+                                                >
                                                     <span className="material-symbols-outlined text-xl">person_remove</span>
                                                 </button>
                                             )}
@@ -99,68 +152,91 @@ export default function TeamSettings() {
                         </section>
                     </div>
 
-                    {/* ── Right column ── */}
                     <div className="lg:col-span-4 space-y-6">
 
-                        {/* Invite */}
-                        <section className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/20">
-                            <h3 className="text-xl font-semibold mb-6">Invite Members</h3>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-on-surface-variant mb-1.5">Email Address</label>
+                        {/* Invite form */}
+                        <section className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/30 shadow-sm">
+                            <h3 className="text-lg font-semibold mb-5">Invite Member</h3>
+                            <form onSubmit={submitInvite} className="space-y-4">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-on-surface-variant">Email</label>
                                     <input
                                         type="email"
-                                        placeholder="colleague@email.com"
-                                        className="w-full p-3 bg-background border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm transition-all"
+                                        placeholder="colleague@example.com"
+                                        value={inviteForm.data.email}
+                                        onChange={(e) => inviteForm.setData('email', e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-on-surface outline-none focus:ring-2 focus:ring-primary-container focus:border-primary text-sm placeholder:text-outline-variant"
+                                        required
                                     />
+                                    {inviteForm.errors.email && (
+                                        <p className="text-xs text-error">{inviteForm.errors.email}</p>
+                                    )}
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-on-surface-variant mb-1.5">Role</label>
-                                    <select className="w-full p-3 bg-background border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary outline-none text-sm appearance-none">
-                                        <option>Member</option>
-                                        <option>Admin</option>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-semibold text-on-surface-variant">Role</label>
+                                    <select
+                                        value={inviteForm.data.role}
+                                        onChange={(e) => inviteForm.setData('role', e.target.value as 'admin' | 'member')}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-outline-variant bg-white text-on-surface outline-none focus:ring-2 focus:ring-primary-container text-sm"
+                                    >
+                                        <option value="member">Member</option>
+                                        <option value="admin">Admin</option>
                                     </select>
                                 </div>
-                                <button className="w-full py-3 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                                    <span className="material-symbols-outlined text-xl">send</span>
-                                    Send Invite
+                                <button
+                                    type="submit"
+                                    disabled={inviteForm.processing}
+                                    className="w-full py-2.5 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                                >
+                                    <span className="material-symbols-outlined text-lg">send</span>
+                                    {inviteForm.processing ? 'Sending...' : 'Send Invite'}
                                 </button>
-                            </div>
+                            </form>
 
-                            {/* Pending invites */}
-                            <div className="mt-6 border-t border-outline-variant/30 pt-4">
-                                <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-3">Pending Invites</h4>
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium">alex.rivera@foundry.cc</p>
-                                        <p className="text-xs text-on-surface-variant">Invited 2 days ago</p>
+                            {invites.length > 0 && (
+                                <div className="mt-6 pt-5 border-t border-outline-variant/30">
+                                    <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">
+                                        Pending Invites
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {invites.map((invite) => (
+                                            <div key={invite.id} className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-medium text-on-surface">{invite.email}</p>
+                                                    <p className="text-xs text-on-surface-variant capitalize">{invite.role}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => revokeInvite(invite.id)}
+                                                    className="text-xs text-error hover:underline font-medium"
+                                                >
+                                                    Revoke
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <button className="text-xs text-error hover:underline font-medium">Revoke</button>
                                 </div>
-                            </div>
+                            )}
                         </section>
 
                         {/* Danger zone */}
-                        <section className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border-2 border-error/10">
-                            <h3 className="text-xl font-semibold text-error mb-2">Danger Zone</h3>
-                            <p className="text-sm text-on-surface-variant mb-4">These actions are destructive and cannot be undone.</p>
-                            <div className="space-y-3">
-                                <button className="w-full flex items-center justify-between p-3 rounded-lg border border-outline-variant/20 hover:bg-surface-container-low transition-all">
-                                    <div className="text-left">
-                                        <p className="text-sm font-semibold text-on-surface">Transfer Ownership</p>
-                                        <p className="text-xs text-on-surface-variant">Move this team to another user.</p>
-                                    </div>
-                                    <span className="material-symbols-outlined text-on-surface-variant">arrow_forward</span>
-                                </button>
-                                <button className="w-full flex items-center justify-between p-3 rounded-lg border border-error/20 hover:bg-error-container/30 transition-all">
+                        {isOwner && (
+                            <section className="bg-surface-container-lowest rounded-xl p-6 border-2 border-error/20 shadow-sm">
+                                <h3 className="text-lg font-semibold text-error mb-2">Danger Zone</h3>
+                                <p className="text-sm text-on-surface-variant mb-4">
+                                    These actions cannot be undone.
+                                </p>
+                                <button
+                                    onClick={deleteTeam}
+                                    className="w-full flex items-center justify-between p-3 rounded-lg border border-error/20 hover:bg-error-container/30 transition-all"
+                                >
                                     <div className="text-left">
                                         <p className="text-sm font-semibold text-error">Delete Team</p>
                                         <p className="text-xs text-on-surface-variant">Permanently remove all data.</p>
                                     </div>
                                     <span className="material-symbols-outlined text-error">delete</span>
                                 </button>
-                            </div>
-                        </section>
+                            </section>
+                        )}
                     </div>
                 </div>
             </div>

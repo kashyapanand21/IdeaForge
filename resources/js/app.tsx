@@ -1,10 +1,9 @@
 import { createInertiaApp } from '@inertiajs/react';
 import type { ComponentType } from 'react';
-// import type { DefineComponent } from 'vue';
 import { createRoot } from 'react-dom/client';
+import { route } from 'ziggy-js';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
 const pages = import.meta.glob<{ default: ComponentType }>('./pages/**/*.tsx');
 
 createInertiaApp({
@@ -21,6 +20,10 @@ createInertiaApp({
     },
 
     setup({ el, App, props }) {
+        // Make route() available globally so every component can use it
+        // without importing it every time
+        // @ts-expect-error — ziggy attaches to window
+        window.route = route;
         createRoot(el).render(<App {...props} />);
     },
 

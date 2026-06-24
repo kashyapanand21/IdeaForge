@@ -17,12 +17,10 @@ class LoginController extends Controller
         return Inertia::render('auth/login');
     }
 
-    // LoginRequest replaces the inline $request->validate([...])
-    // Laravel resolves it from the container, runs authorize() + rules() first
-    // If validation fails, it redirects back with errors automatically
+        
     public function store(LoginRequest $request): RedirectResponse
     {
-        // validated() returns only the fields that passed your rules — safe to use
+        
         $credentials = $request->validated();
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -31,8 +29,7 @@ class LoginController extends Controller
             ]);
         }
 
-        // regenerate() prevents session fixation attacks
-        // an attacker can't reuse a session ID they captured before login
+        
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));

@@ -26,22 +26,14 @@ class ResetPasswordController extends Controller
 
     public function store(ResetPasswordRequest $request): RedirectResponse
     {
-        // Password::reset() does ALL of this:
-        // 1. Finds the user by email
-        // 2. Verifies the token matches what's in password_reset_tokens
-        // 3. Calls your callback to actually update the password
-        // 4. Deletes the used token so it can't be reused
+        
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) use ($request): void {
                 $user->forceFill([
                     'password' => Hash::make($request->password),
-                    // Str::random() generates a new remember token
-                    // this logs out all other devices that had remember-me cookies
                     'remember_token' => Str::random(60),
                 ])->save();
-
-                // PasswordReset event can be listened to for logging, notifications, etc.
                 event(new PasswordReset($user));
             },
         );

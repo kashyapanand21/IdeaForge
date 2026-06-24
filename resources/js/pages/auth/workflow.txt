@@ -1,0 +1,239 @@
+1. Register:
+
+Browser
+└── User fills form at /register
+    └── resources/js/pages/auth/register.tsx
+        └── useForm() tracks: name, email, password, password_confirmation
+            └── form submit → post('/register')
+                └── Inertia makes XHR POST to /register
+
+Laravel Router
+└── routes/web.php
+    └── Route::middleware('guest') group
+        └── POST /register → RegisterController@store
+            └── app/Http/Controllers/Auth/RegisterController.php
+
+RegisterController@store receives request
+└── Laravel sees type hint: RegisterRequest $request
+    └── app/Http/Requests/Auth/RegisterRequest.php
+        └── authorize() → returns true (anyone can register)
+        └── rules() runs BEFORE store() executes:
+            - name: required, string, max 255
+            - email: required, email, unique:users
+            - password: required, confirmed, Password::defaults()
+                └── Password::defaults() is defined in AppServiceProvider
+                    └── app/Providers/AppServiceProvider.php
+                        └── production: min 12, mixed case, symbols, uncompromised
+                        └── local: no restrictions (so "password" works in dev)
+        └── if rules fail:
+            → Laravel redirects back automatically
+            → errors prop populated in register.tsx
+            → {errors.email && <p>{errors.email}</p>} renders the message
+        └── if rules pass:
+            → $request->validated() returns only safe fields
+            → continues to store() body
+
+store() body executes
+└── User::create([...])
+    └── app/Models/User.php
+        └── #[Fillable] attribute allows: name, email, password, avatar
+        └── casts(): password → 'hashed' (auto-bcrypts on save)
+        └── saves row to users table
+
+└── event(new Registered($user))
+    └── Illuminate\Auth\Events\Registered
+    └── Laravel has a built-in listener for this event:
+        SendEmailVerificationNotification
+    └── it checks: does $user implement MustVerifyEmail?
+        └── app/Models/User.php
+            └── class User extends Authenticatable implements MustVerifyEmail
+        └── yes → sends verification email immediately (synchronous, no queue)
+        └── email contains signed URL: /email/verify/{id}/{hash}
+
+└── Auth::login($user) — logs them in, creates session
+
+└── redirect()->route('dashboard')
+    → Inertia sees the redirect response
+    → navigates browser to /dashboard
+
+
+
+
+2. Login:
+
+Browser
+└── resources/js/pages/auth/login.tsx
+    └── post('/login') on submit
+
+routes/web.php
+└── Route::middleware('guest')
+    └── POST /login → LoginController@store
+        └── app/Http/Controllers/Auth/LoginController.php
+
+LoginController@store
+└── LoginRequest $request
+    └── app/Http/Requests/Auth/LoginRequest.php
+        └── rules(): email format, password present
+        └── does NOT check credentials here — just format
+
+└── Auth::attempt($credentials, $remember)
+    └── looks up user by email
+    └── bcrypt-verifies password
+    └── if fails:
+        → back()->withErrors(['email' => 'These credentials...'])
+        → errors.email appears in login.tsx
+    └── if succeeds:
+        → creates authenticated session
+
+└── $request->session()->regenerate()
+    → issues new session ID
+    → prevents session fixation attack
+    → (attacker captures session ID before login, tries to reuse it after)
+
+└── redirect()->intended(route('dashboard'))
+    → intended() checks if user was trying to reach a specific URL
+    → e.g. they tried /ideas, got redirected to login, now goes back to /ideas
+    → falls back to /dashboard if no intended URL stored
+
+
+3. Logout:
+
+Browser
+└── AppLayout.tsx logout button
+    └── router.post('/logout')
+    └── (must be POST not GET — GET requests can be triggered by
+        third party sites via image tags, CSRF attacks)
+
+routes/web.php
+└── Route::middleware('auth')
+    └── POST /logout → LoginController@destroy
+
+LoginController@destroy
+└── Auth::logout() — clears authenticated session
+└── $request->session()->invalidate() — destroys all session data
+└── $request->session()->regenerateToken() — issues new CSRF token
+    → old forms with old token now invalid
+└── redirect()->route('home')
+
+
+4.forgetpassword:
+
+Browser
+└── resources/js/pages/auth/forgot-password.tsx
+    └── post('/forgot-password') with email
+
+routes/web.php
+└── GET /forgot-password → ForgotPasswordController@create
+    └── renders forgot-password.tsx (just the page)
+└── POST /forgot-password → ForgotPasswordController@store
+    └── app/Http/Controllers/Auth/ForgotPasswordController.php
+
+ForgotPasswordController@store
+└── ForgotPasswordRequest $request
+    └── app/Http/Requests/Auth/ForgotPasswordRequest.php
+    └── rules(): just email format
+
+└── Password::sendResetLink(['email' => ...])
+    └── this is the Illuminate\Support\Facades\Password facade
+    └── internally does ALL of this:
+        1. looks up user by email in users table
+        2. generates cryptographically random token (60 chars)
+        3. hashes the token with bcrypt
+        4. stores hash in password_reset_tokens table:
+           (email, hashed_token, created_at)
+        5. sends email with URL: /reset-password/{raw_token}?email=...
+           → the raw token goes in the URL
+           → the hashed version stays in the database
+           → on reset, it bcrypt-verifies URL token against stored hash
+    └── returns Password::RESET_LINK_SENT or error string
+
+└── same response whether email exists or not
+    → attacker can't enumerate which emails are registered
+    → back()->with('status', ...) on success
+    → back()->withErrors(['email' => ...]) on failure
+    → forgot-password.tsx shows {wasSuccessful && <div>Check inbox</div>}
+
+
+
+5.resetpassword:
+
+Browser
+└── user clicks link in email: /reset-password/{token}?email=...
+
+routes/web.php
+└── GET /reset-password/{token} → ResetPasswordController@create
+    └── app/Http/Controllers/Auth/ResetPasswordController.php
+    └── passes token + email as props to reset-password.tsx
+    └── resources/js/pages/auth/reset-password.tsx
+        └── token stored in hidden field
+        └── email pre-filled from props
+
+└── POST /reset-password → ResetPasswordController@store
+
+ResetPasswordController@store
+└── ResetPasswordRequest $request
+    └── app/Http/Requests/Auth/ResetPasswordRequest.php
+    └── rules(): token required, email, password confirmed
+
+└── Password::reset([token, email, password, password_confirmation], callback)
+    └── internally does ALL of this:
+        1. finds user by email
+        2. finds token row in password_reset_tokens for that email
+        3. bcrypt-verifies: does URL token match stored hash?
+        4. checks token not expired (default: 60 minutes, config/auth.php)
+        5. if valid: calls your callback
+            → Hash::make($request->password) — hashes new password
+            → Str::random(60) — new remember_token
+              (logs out all other devices that had remember-me cookies)
+            → $user->save()
+            → event(new PasswordReset($user)) — fires for logging/hooks
+        6. deletes the token row — can't be reused
+    └── returns Password::PASSWORD_RESET or error string
+
+└── redirect to /login with success status
+
+
+6.email verification:
+
+
+After registration
+└── SendEmailVerificationNotification listener fires
+    └── sends email with signed URL:
+        /email/verify/{user_id}/{sha1_hash_of_email}?expires=...&signature=...
+
+URL structure explained:
+└── {user_id} — identifies which user
+└── {sha1_hash_of_email} — verifies email hasn't changed since link was sent
+└── ?expires= — timestamp when link expires
+└── ?signature= — HMAC of entire URL using APP_KEY
+    → if anyone modifies any part of the URL, signature fails
+
+Browser clicks link
+└── GET /email/verify/{id}/{hash}
+    └── routes/web.php
+        └── Route::middleware('auth') — must be logged in
+            └── ->middleware('signed') — validates URL signature
+                → if signature invalid or expired: 403
+            └── EmailVerificationController@verify
+                └── app/Http/Controllers/Auth/EmailVerificationController.php
+
+EmailVerificationController@verify
+└── receives EmailVerificationRequest
+    └── this is a special Laravel Form Request (not one we wrote)
+    └── it validates: {id} in URL matches auth()->id()
+    └── it validates: {hash} matches sha1 of user's email
+    └── if either fails: 403
+
+└── $request->fulfill()
+    └── sets email_verified_at = now() on the user
+    └── fires Verified event
+
+└── redirect to dashboard
+
+Resend flow:
+└── POST /email/verification-notification
+    └── throttle:6,1 — max 6 requests per minute (prevents abuse)
+    └── EmailVerificationController@resend
+    └── $request->user()->sendEmailVerificationNotification()
+    └── back()->with('status', 'verification-link-sent')
+    └── verify-email.tsx shows success message
