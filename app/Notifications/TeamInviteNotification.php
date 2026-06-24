@@ -22,14 +22,16 @@ class TeamInviteNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $acceptUrl = route('invites.accept', $this->invite->token);
-        $declineUrl = route('invites.decline', $this->invite->token);
+        // Links to a confirmation page — the page then POSTs to invites.accept
+        // Direct links to state-changing endpoints are a CSRF/CSRF-by-navigation risk
+        $confirmUrl = route('invites.confirm', $this->invite->token);
+        $declineUrl = route('invites.decline-page', $this->invite->token);
 
         return (new MailMessage)
             ->subject("You've been invited to join {$this->invite->team->name} on IdeaForge")
-            ->greeting("Hello!")
+            ->greeting('Hello!')
             ->line("You've been invited to join **{$this->invite->team->name}** as a {$this->invite->role}.")
-            ->action('Accept Invite', $acceptUrl)
+            ->action('View Invite', $confirmUrl)
             ->line("Or decline: {$declineUrl}")
             ->line('This invite expires in 48 hours.');
     }

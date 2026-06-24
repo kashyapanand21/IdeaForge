@@ -9,6 +9,11 @@ export default function VerifyEmail() {
         post('/email/verification-notification');
     };
 
+    const logout: FormEventHandler = (e) => {
+        e.preventDefault();
+        post('/logout');
+    };
+
     return (
         <>
             <Head title="Verify Email | IdeaForge" />
@@ -40,9 +45,11 @@ export default function VerifyEmail() {
                         </button>
                     </form>
 
-                    <form method="POST" action="/logout" className="mt-4">
-                        <input type="hidden" name="_token" value="" />
-                        <button type="submit" className="text-sm text-on-surface-variant hover:text-primary transition-colors">
+                    <form onSubmit={logout} className="mt-4">
+                        <button
+                            type="submit"
+                            className="text-sm text-on-surface-variant hover:text-primary transition-colors"
+                        >
                             Log out
                         </button>
                     </form>

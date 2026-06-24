@@ -12,12 +12,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class TeamInviteController extends Controller
 {
     public function store(InviteMemberRequest $request, Team $team): RedirectResponse
     {
-        // Check if there's already a pending invite for this email on this team
         $existing = TeamInvite::where('team_id', $team->id)
             ->where('email', $request->email)
             ->where('status', 'pending')
@@ -27,7 +28,6 @@ class TeamInviteController extends Controller
             return back()->withErrors(['email' => 'A pending invite already exists for this email.']);
         }
 
-        // Check if the user is already a member
         $alreadyMember = $team->members()->where('email', $request->email)->exists();
 
         if ($alreadyMember) {
@@ -39,16 +39,15 @@ class TeamInviteController extends Controller
             'invited_by' => auth()->id(),
             'email'      => $request->email,
             'role'       => $request->role,
-            // Str::random(32) generates a cryptographically random token
             'token'      => Str::random(32),
             'status'     => 'pending',
             'expires_at' => now()->addHours(48),
         ]);
 
-        // Send email notification — goes through queue
         \Illuminate\Support\Facades\Notification::route('mail', $invite->email)
             ->notify(new TeamInviteNotification($invite));
-                return back()->with('status', 'Invite sent.');
+
+        return back()->with('status', 'Invite sent.');
     }
 
     public function accept(Request $request, string $token): RedirectResponse
@@ -60,7 +59,6 @@ class TeamInviteController extends Controller
                 ->withErrors(['invite' => 'This invite is expired or has already been used.']);
         }
 
-        // Wrap in transaction — both must succeed or neither happens
         DB::transaction(function () use ($invite, $request): void {
             TeamMember::create([
                 'team_id' => $invite->team_id,
@@ -94,5 +92,35 @@ class TeamInviteController extends Controller
         $invite->delete();
 
         return back()->with('status', 'Invite revoked.');
+    }
+
+    public function confirm(string $token): Response|RedirectResponse
+    {
+        $invite = TeamInvite::where('token', $token)->firstOrFail();
+
+        if (! $invite->isValid()) {
+            return redirect()->route('dashboard')
+                ->withErrors(['invite' => 'This invite is expired or has already been used.']);
+        }
+
+        return Inertia::render('invites/confirm', [
+            'invite' => $invite->load('team'),
+            'token'  => $token,
+        ]);
+    }
+
+    public function declinePage(string $token): Response|RedirectResponse
+    {
+        $invite = TeamInvite::where('token', $token)->firstOrFail();
+
+        if (! $invite->isValid()) {
+            return redirect()->route('dashboard')
+                ->withErrors(['invite' => 'This invite is expired or has already been used.']);
+        }
+
+        return Inertia::render('invites/decline', [
+            'invite' => $invite->load('team'),
+            'token'  => $token,
+        ]);
     }
 }

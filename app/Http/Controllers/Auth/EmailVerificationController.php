@@ -19,16 +19,18 @@ class EmailVerificationController extends Controller
 
     public function verify(EmailVerificationRequest $request): RedirectResponse
     {
+        // dd($request->all());
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->intended(route('dashboard'));
         }
-
+        
         $request->fulfill();
 
         return redirect()->intended(route('dashboard'));
     }
     public function resend(Request $request): RedirectResponse
     {
+        // dd($request->all());
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->intended(route('dashboard'));
         }

@@ -24,12 +24,9 @@ class RegisterController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,
         ]);
 
-        // Firing the Registered event does two things:
-        // 1. If User implements MustVerifyEmail — sends the verification email
-        // 2. Other listeners can hook into this event (e.g. welcome email, analytics)
         event(new Registered($user));
 
         Auth::login($user);
