@@ -29,7 +29,9 @@ use Illuminate\Support\Carbon;
 // MustVerifyEmail is a CONTRACT (interface) — it tells Laravel this user type
 // requires email verification. The Registered event listener checks for this
 // interface and automatically sends the verification email when fired.
-class User extends Authenticatable implements MustVerifyEmail
+
+// class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable 
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;

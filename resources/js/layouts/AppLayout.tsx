@@ -1,21 +1,20 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Auth } from '@/types/auth';
 
 interface Props {
     children: ReactNode;
-    // active tells the layout which nav item to highlight
     active: 'dashboard' | 'ideas' | 'teams' | 'notifications' | 'profile';
 }
 
 interface SharedProps {
     auth: Auth;
     name: string;
+    flash: { status: string | null };
     [key: string]: unknown;
 }
 
-// Nav items defined once, reused in both desktop sidebar and mobile menu
 const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
     { key: 'ideas', label: 'My Ideas', icon: 'lightbulb', href: '/ideas' },
@@ -25,15 +24,13 @@ const navItems = [
 ] as const;
 
 export default function AppLayout({ children, active }: Props) {
-    const { auth } = usePage<SharedProps>().props;
-
-    // controls mobile sidebar open/close
+    const { auth, flash } = usePage<SharedProps>().props;
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     return (
         <div className="min-h-screen bg-background">
 
-            {/* ── Mobile overlay ── */}
+            {/* ── Mobile overlay — closes sidebar when clicking outside ── */}
             {sidebarOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-black/30 lg:hidden"
@@ -50,21 +47,11 @@ export default function AppLayout({ children, active }: Props) {
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 {/* Logo */}
-                <div className="px-6 mb-8 flex justify-between">
-                    <div className="">
-                        <Link href="/">
-                            <h1 className="text-2xl font-bold text-primary">IdeaForge</h1>
-                            <p className="text-xs text-on-surface-variant mt-0.5">Build the future</p>
-                        </Link>
-                    </div>
-                    <button
-                        className="text-on-surface-variant p-1"
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        >
-                        <span className="material-symbols-outlined">
-                            {sidebarOpen ? 'close' : 'menu'}
-                        </span>
-                    </button>
+                <div className="px-6 mb-8">
+                    <Link href="/">
+                        <h1 className="text-2xl font-bold text-primary">IdeaForge</h1>
+                        <p className="text-xs text-on-surface-variant mt-0.5">Build the future</p>
+                    </Link>
                 </div>
 
                 {/* Nav links */}
@@ -109,26 +96,23 @@ export default function AppLayout({ children, active }: Props) {
             </aside>
 
             {/* ── Top bar ── */}
-            <header
-                className={`
-                    fixed top-0 right-0 h-16 z-40
-                    bg-background/80 backdrop-blur-md
-                    border-b border-outline-variant
-                    flex items-center justify-between px-6
-                    transition-all duration-300
-                    ${sidebarOpen
-                        ? 'lg:w-[calc(100%-16rem)]'
-                        : 'w-full'}
-                `}
-            >
+            <header className={`
+                fixed top-0 right-0 h-16 z-40
+                bg-background/80 backdrop-blur-md
+                border-b border-outline-variant
+                flex items-center gap-4 px-6
+                transition-all duration-300
+                ${sidebarOpen ? 'lg:left-64' : 'left-0'}
+            `}>
 
-                {/* Hamburger — mobile only */}
+                {/* Hamburger — works on ALL screen sizes, toggles sidebar open/closed */}
                 <button
-                    className="lg:hidden text-on-surface-variant p-1"
+                    className="text-on-surface-variant hover:bg-surface-container p-2 rounded-lg transition-colors shrink-0"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                    aria-label="Toggle sidebar"
                 >
                     <span className="material-symbols-outlined">
-                        {sidebarOpen ? 'close' : 'menu'}
+                        {sidebarOpen ? 'menu_open' : 'menu'}
                     </span>
                 </button>
 
@@ -147,20 +131,18 @@ export default function AppLayout({ children, active }: Props) {
                     />
                 </div>
 
-                {/* Right side — notifications + avatar */}
-                <div className="flex items-center gap-4 ml-auto">
+                {/* Right side — notifications + avatar + logout */}
+                <div className="flex items-center gap-3 ml-auto">
                     <Link
                         href="/notifications"
                         className="relative text-on-surface-variant hover:bg-surface-container
                             p-2 rounded-full transition-colors"
                     >
                         <span className="material-symbols-outlined">notifications</span>
-                        {/* Unread dot — we'll make this dynamic later */}
                         <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
                     </Link>
 
                     <Link href="/profile" className="flex items-center gap-2">
-                        {/* Avatar — shows initials if no avatar uploaded */}
                         <div className="w-9 h-9 rounded-full bg-primary-container
                             flex items-center justify-center text-on-primary-container
                             font-bold text-sm border-2 border-primary-container overflow-hidden">
@@ -174,19 +156,33 @@ export default function AppLayout({ children, active }: Props) {
                             {auth.user.name}
                         </span>
                     </Link>
+
+                    {/* Logout */}
+                    <button
+                        onClick={() => router.post('/logout')}
+                        className="text-on-surface-variant hover:bg-surface-container
+                            p-2 rounded-full transition-colors"
+                        aria-label="Log out"
+                    >
+                        <span className="material-symbols-outlined">logout</span>
+                    </button>
                 </div>
             </header>
 
+            {/* ── Flash message ── */}
+            {flash.status && (
+                <div className="fixed top-20 right-6 z-50 bg-secondary-container
+                    text-on-secondary-container px-4 py-3 rounded-lg shadow-md text-sm font-medium
+                    animate-in fade-in slide-in-from-top-2">
+                    {flash.status}
+                </div>
+            )}
+
             {/* ── Main content ── */}
-            {/* lg:ml-64 pushes content right of the fixed sidebar on desktop */}
-            {/* pt-16 pushes content below the fixed topbar */}
-            <main
-                className={`
-                    pt-16 min-h-screen
-                    transition-all duration-300
-                    ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}
-                `}
-            >
+            <main className={`
+                pt-16 min-h-screen transition-all duration-300
+                ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}
+            `}>
                 {children}
             </main>
         </div>

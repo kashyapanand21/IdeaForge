@@ -20,4 +20,4 @@ class InviteMemberRequest extends FormRequest
             'role'  => ['required', Rule::in(['admin', 'member'])],
         ];
     }
-}
+} 
