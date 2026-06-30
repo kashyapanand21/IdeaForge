@@ -93,6 +93,17 @@ export default function AppLayout({ children, active }: Props) {
                         New Idea
                     </Link>
                 </div>
+                <div className="px-4 mt-3 lg:hidden">
+                    <button
+                        onClick={() => router.post('/logout')}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-container-low"
+                    >
+                        <span className="material-symbols-outlined">
+                            logout
+                        </span>
+                        Logout
+                    </button>
+                </div>
             </aside>
 
             {/* ── Top bar ── */}
@@ -100,7 +111,7 @@ export default function AppLayout({ children, active }: Props) {
                 fixed top-0 right-0 h-16 z-40
                 bg-background/80 backdrop-blur-md
                 border-b border-outline-variant
-                flex items-center gap-4 px-6
+                flex items-center gap-4 px-3 sm:px-4 lg:px-6
                 transition-all duration-300
                 ${sidebarOpen ? 'lg:left-64' : 'left-0'}
             `}>
@@ -117,7 +128,15 @@ export default function AppLayout({ children, active }: Props) {
                 </button>
 
                 {/* Search */}
-                <div className="relative flex-1 max-w-sm hidden sm:block">
+                <div className="relative flex-1 min-w-0 max-w-md hidden lg:block">
+                    <button
+                        className="lg:hidden p-2 rounded-lg hover:bg-surface-container transition-colors"
+                        aria-label="Search"
+                    >
+                        <span className="material-symbols-outlined">
+                            search
+                        </span>
+                    </button>
                     <span className="material-symbols-outlined absolute left-3 top-1/2
                         -translate-y-1/2 text-on-surface-variant text-[20px]">
                         search
@@ -152,7 +171,7 @@ export default function AppLayout({ children, active }: Props) {
                                 : auth.user.name.charAt(0).toUpperCase()
                             }
                         </div>
-                        <span className="hidden md:block text-sm font-medium text-on-surface">
+                        <span className="hidden lg:block text-sm font-medium text-on-surface">
                             {auth.user.name}
                         </span>
                     </Link>
@@ -160,9 +179,8 @@ export default function AppLayout({ children, active }: Props) {
                     {/* Logout */}
                     <button
                         onClick={() => router.post('/logout')}
-                        className="text-on-surface-variant hover:bg-surface-container
+                        className="hidden lg:flex text-on-surface-variant hover:bg-surface-container
                             p-2 rounded-full transition-colors"
-                        aria-label="Log out"
                     >
                         <span className="material-symbols-outlined">logout</span>
                     </button>

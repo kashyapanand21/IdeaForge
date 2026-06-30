@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInviteController;
 use App\Http\Controllers\TeamMemberController;
@@ -31,7 +32,6 @@ Route::middleware('guest')->group(function () {
 // Auth-only
 Route::middleware('auth')->group(function () {
 
-    // Email verification — auth but NOT verified (user needs to reach these to verify)
     Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
     Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware('signed')
@@ -42,8 +42,6 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
-    // Invite confirmation pages — auth but not verified
-    // (invited person may not have verified email yet)
     Route::get('/invites/{token}', [TeamInviteController::class, 'confirm'])
         ->name('invites.confirm');
     Route::get('/invites/{token}/decline', [TeamInviteController::class, 'declinePage'])
@@ -53,10 +51,14 @@ Route::middleware('auth')->group(function () {
     Route::middleware('verified')->group(function () {
         Route::inertia('/dashboard', 'dashboard')->name('dashboard');
 
-        Route::inertia('/ideas', 'ideas/show')->name('ideas.index');
-        Route::post('/ideas', fn () => redirect('/ideas'))->name('ideas.store');
-        Route::inertia('/ideas/create', 'ideas/create')->name('ideas.create');
-        Route::inertia('/ideas/1', 'ideas/show')->name('ideas.show');
+        // Ideas — real resource routes replacing the old stubs
+        Route::resource('ideas', IdeaController::class);
+        Route::post('/ideas/{idea}/share', [IdeaController::class, 'share'])
+            ->name('ideas.share');
+        Route::post('/ideas/{idea}/status', [IdeaController::class, 'changeStatus'])
+            ->name('ideas.status');
+        Route::post('/ideas/{idea}/pin', [IdeaController::class, 'pin'])
+            ->name('ideas.pin');
 
         Route::inertia('/hackathons', 'hackathons/index')->name('hackathons.index');
         Route::inertia('/hackathons/1', 'hackathons/show')->name('hackathons.show');
@@ -71,19 +73,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/teams/{team}/transfer-ownership', [TeamController::class, 'transferOwnership'])
             ->name('teams.transfer-ownership');
 
-        // Invites — sent by team admins/owners
         Route::post('/teams/{team}/invites', [TeamInviteController::class, 'store'])
             ->name('teams.invites.store');
         Route::delete('/teams/{team}/invites/{invite}', [TeamInviteController::class, 'destroy'])
             ->name('teams.invites.destroy');
 
-        // Invite responses — POST because they change state
         Route::post('/invites/{token}/accept', [TeamInviteController::class, 'accept'])
             ->name('invites.accept');
         Route::post('/invites/{token}/decline', [TeamInviteController::class, 'decline'])
             ->name('invites.decline');
 
-        // Member management
         Route::delete('/teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])
             ->name('teams.members.destroy');
         Route::delete('/teams/{team}/leave', [TeamMemberController::class, 'leave'])
