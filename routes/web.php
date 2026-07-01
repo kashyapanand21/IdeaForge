@@ -9,6 +9,7 @@ use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInviteController;
 use App\Http\Controllers\TeamMemberController;
+use App\Http\Controllers\VoteController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -59,6 +60,8 @@ Route::middleware('auth')->group(function () {
             ->name('ideas.status');
         Route::post('/ideas/{idea}/pin', [IdeaController::class, 'pin'])
             ->name('ideas.pin');
+        Route::post('/ideas/{idea}/vote', [VoteController::class, 'store'])
+            ->name('ideas.vote');
 
         Route::inertia('/hackathons', 'hackathons/index')->name('hackathons.index');
         Route::inertia('/hackathons/1', 'hackathons/show')->name('hackathons.show');

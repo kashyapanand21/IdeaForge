@@ -26,6 +26,15 @@ class IdeaPolicy
         return false;
     }
 
+    public function vote(User $user, Idea $idea): bool
+    {
+        if ($idea->isShared() && $idea->team !== null) {
+            return $user->isMemberOf($idea->team);
+        }
+
+        return false;
+    }
+
     public function update(User $user, Idea $idea): bool
     {
         // Only the owner can edit the content of an idea

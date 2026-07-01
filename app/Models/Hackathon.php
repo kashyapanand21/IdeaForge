@@ -85,11 +85,30 @@ class Hackathon extends Model
         return $this->hasMany(HackathonMilestone::class);
     }
 
-    public function isInterested(): bool { return $this->status === 'interested'; }
-    public function isRegistered(): bool { return $this->status === 'registered'; }
-    public function isBuilding(): bool { return $this->status === 'building'; }
-    public function isSubmitted(): bool { return $this->status === 'submitted'; }
-    public function hasResults(): bool { return $this->status === 'results'; }
+    public function isInterested(): bool
+    {
+        return $this->status === 'interested';
+    }
+
+    public function isRegistered(): bool
+    {
+        return $this->status === 'registered';
+    }
+
+    public function isBuilding(): bool
+    {
+        return $this->status === 'building';
+    }
+
+    public function isSubmitted(): bool
+    {
+        return $this->status === 'submitted';
+    }
+
+    public function hasResults(): bool
+    {
+        return $this->status === 'results';
+    }
 
     public function isOngoing(): bool
     {
@@ -118,6 +137,13 @@ class Hackathon extends Model
         return (int) now()->diffInDays($this->ends_at);
     }
 
-    public function isOnline(): bool { return $this->mode === 'online'; }
-    public function isOffline(): bool { return $this->mode === 'offline'; }
+    public function isOnline(): bool
+    {
+        return $this->mode === 'online';
+    }
+
+    public function isOffline(): bool
+    {
+        return $this->mode === 'offline';
+    }
 }

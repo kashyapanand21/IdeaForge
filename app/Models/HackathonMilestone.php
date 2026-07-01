@@ -55,9 +55,20 @@ class HackathonMilestone extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function isPending(): bool { return $this->status === 'pending'; }
-    public function isInProgress(): bool { return $this->status === 'in_progress'; }
-    public function isDone(): bool { return $this->status === 'done'; }
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this->status === 'in_progress';
+    }
+
+    public function isDone(): bool
+    {
+        return $this->status === 'done';
+    }
 
     public function isOverdue(): bool
     {
