@@ -1,10 +1,12 @@
 <?php
 
+use App\Events\CommentPosted;
 use App\Models\Comment;
 use App\Models\Idea;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 
 test('team member can post a comment on a shared idea', function () {
     $user = User::factory()->create();
@@ -172,4 +174,21 @@ test('non-owner cannot comment on a private idea', function () {
     $this->actingAs($outsider)
         ->post(route('comments.store', $idea), ['body' => 'Should be blocked'])
         ->assertForbidden();
+});
+
+test('posting a comment dispatches CommentPosted event', function () {
+    Event::fake();
+
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => 'owner']);
+    $idea = Idea::factory()->shared($team)->create();
+
+    $this->actingAs($user)
+        ->post(route('comments.store', $idea), ['body' => 'Trigger the event']);
+
+    Event::assertDispatched(CommentPosted::class, function ($event) use ($idea, $user) {
+        return $event->comment->idea_id === $idea->id
+            && $event->comment->user_id === $user->id;
+    });
 });

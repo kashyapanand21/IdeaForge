@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CommentPosted;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateCommentRequest;
 use App\Models\Comment;
 use App\Models\Idea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\RateLimiter;
+
+// use App\Events\CommentPosted;
 
 class CommentController extends Controller
 {
@@ -22,11 +25,13 @@ class CommentController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        Comment::create([
+        $comment = Comment::create([
             'idea_id' => $idea->id,
             'user_id' => $request->user()->id,
             'body' => $request->validated('body'),
         ]);
+
+        CommentPosted::dispatch($comment);
 
         return back();
     }
