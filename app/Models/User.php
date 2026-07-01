@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,11 +25,6 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable(['name', 'email', 'password', 'avatar'])]
 #[Hidden(['password', 'remember_token'])]
-// MustVerifyEmail is a CONTRACT (interface) — it tells Laravel this user type
-// requires email verification. The Registered event listener checks for this
-// interface and automatically sends the verification email when fired.
-
-// class User extends Authenticatable implements MustVerifyEmail
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -46,11 +40,13 @@ class User extends Authenticatable
 
     // --- Teams ---
 
+    /** @return HasMany<Team, User> */
     public function ownedTeams(): HasMany
     {
         return $this->hasMany(Team::class, 'owner_id');
     }
 
+    /** @return BelongsToMany<Team, User> */
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_members')
@@ -58,6 +54,7 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    /** @return HasMany<TeamMember, User> */
     public function teamMemberships(): HasMany
     {
         return $this->hasMany(TeamMember::class);
@@ -65,16 +62,19 @@ class User extends Authenticatable
 
     // --- Ideas ---
 
+    /** @return HasMany<Idea, User> */
     public function ideas(): HasMany
     {
         return $this->hasMany(Idea::class);
     }
 
+    /** @return HasMany<Idea, User> */
     public function privateIdeas(): HasMany
     {
         return $this->hasMany(Idea::class)->whereNull('team_id');
     }
 
+    /** @return HasMany<Idea, User> */
     public function sharedIdeas(): HasMany
     {
         return $this->hasMany(Idea::class)->whereNotNull('team_id');
@@ -82,6 +82,7 @@ class User extends Authenticatable
 
     // --- Votes ---
 
+    /** @return HasMany<IdeaVote, User> */
     public function ideaVotes(): HasMany
     {
         return $this->hasMany(IdeaVote::class);
@@ -89,6 +90,7 @@ class User extends Authenticatable
 
     // --- Comments ---
 
+    /** @return HasMany<Comment, User> */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
@@ -96,11 +98,13 @@ class User extends Authenticatable
 
     // --- Hackathons ---
 
+    /** @return HasMany<Hackathon, User> */
     public function createdHackathons(): HasMany
     {
         return $this->hasMany(Hackathon::class, 'created_by');
     }
 
+    /** @return HasMany<HackathonMilestone, User> */
     public function assignedMilestones(): HasMany
     {
         return $this->hasMany(HackathonMilestone::class, 'assigned_to');
@@ -108,6 +112,7 @@ class User extends Authenticatable
 
     // --- Invites ---
 
+    /** @return HasMany<TeamInvite, User> */
     public function sentInvites(): HasMany
     {
         return $this->hasMany(TeamInvite::class, 'invited_by');
@@ -122,6 +127,7 @@ class User extends Authenticatable
 
     public function roleIn(Team $team): ?string
     {
+        /** @var TeamMember|null $membership */
         $membership = $this->teamMemberships()
             ->where('team_id', $team->id)
             ->first();

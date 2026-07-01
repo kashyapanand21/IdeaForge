@@ -26,44 +26,41 @@ class Team extends Model
     /** @use HasFactory<TeamFactory> */
     use HasFactory;
 
+    /** @return BelongsTo<User, Team> */
     public function owner(): BelongsTo
     {
-        // A team belongs to a user who created it (the owner)
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    /** @return BelongsToMany<User, Team> */
     public function members(): BelongsToMany
     {
-        // Many-to-many: a team has many users through team_members table
-        // withPivot gives us access to the 'role' column on the pivot table
-        // withTimestamps tracks when the member joined
         return $this->belongsToMany(User::class, 'team_members')
             ->withPivot('role')
             ->withTimestamps();
     }
 
+    /** @return HasMany<TeamMember, Team> */
     public function teamMembers(): HasMany
     {
-        // Direct access to TeamMember records
-        // useful when you need the pivot row itself, not just the user
         return $this->hasMany(TeamMember::class);
     }
 
+    /** @return HasMany<TeamInvite, Team> */
     public function invites(): HasMany
     {
-        // All pending/accepted invites for this team
         return $this->hasMany(TeamInvite::class);
     }
 
+    /** @return HasMany<Idea, Team> */
     public function ideas(): HasMany
     {
-        // All ideas shared to this team
         return $this->hasMany(Idea::class);
     }
 
+    /** @return HasMany<Hackathon, Team> */
     public function hackathons(): HasMany
     {
-        // All hackathons this team is participating in
         return $this->hasMany(Hackathon::class);
     }
 }

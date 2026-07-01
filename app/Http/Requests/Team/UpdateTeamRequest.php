@@ -2,14 +2,17 @@
 
 namespace App\Http\Requests\Team;
 
+use App\Models\Team;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTeamRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // $this->route('team') gives us the Team model via route model binding
-        return $this->user()->canManage($this->route('team'));
+        $team = $this->route('team');
+        assert($team instanceof Team);
+
+        return $this->user()->canManage($team);
     }
 
     /** @return array<string, mixed> */

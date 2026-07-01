@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Team;
 
+use App\Models\Team;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,10 @@ class InviteMemberRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->canManage($this->route('team'));
+        $team = $this->route('team');
+        assert($team instanceof Team);
+
+        return $this->user()->canManage($team);
     }
 
     /** @return array<string, mixed> */

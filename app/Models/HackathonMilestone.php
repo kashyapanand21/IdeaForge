@@ -39,46 +39,28 @@ class HackathonMilestone extends Model
     {
         return [
             'due_date' => 'datetime',
-            // completed_at is null until the milestone is marked done
-            // when marked done we store the exact timestamp
-            // this lets us know not just IF it was completed but WHEN
             'completed_at' => 'datetime',
         ];
     }
 
+    /** @return BelongsTo<Hackathon, HackathonMilestone> */
     public function hackathon(): BelongsTo
     {
         return $this->belongsTo(Hackathon::class);
     }
 
+    /** @return BelongsTo<User, HackathonMilestone> */
     public function assignedTo(): BelongsTo
     {
-        // nullable — a milestone may not be assigned to anyone yet
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    // --- Status helpers ---
-
-    public function isPending(): bool
-    {
-        return $this->status === 'pending';
-    }
-
-    public function isInProgress(): bool
-    {
-        return $this->status === 'in_progress';
-    }
-
-    public function isDone(): bool
-    {
-        return $this->status === 'done';
-    }
-
-    // --- Date helpers ---
+    public function isPending(): bool { return $this->status === 'pending'; }
+    public function isInProgress(): bool { return $this->status === 'in_progress'; }
+    public function isDone(): bool { return $this->status === 'done'; }
 
     public function isOverdue(): bool
     {
-        // overdue means due date has passed but milestone is not done yet
         return $this->due_date !== null
             && $this->due_date->isPast()
             && ! $this->isDone();
@@ -86,8 +68,6 @@ class HackathonMilestone extends Model
 
     public function markAsDone(): bool
     {
-        // sets both status and completed_at in one call
-        // returns true/false based on whether save succeeded
         return $this->update([
             'status' => 'done',
             'completed_at' => now(),

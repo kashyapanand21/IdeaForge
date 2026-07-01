@@ -114,6 +114,7 @@ class IdeaController extends Controller
             'team_id' => ['required', 'integer', 'exists:teams,id'],
         ]);
 
+        /** @var Team $team */
         $team = Team::findOrFail($request->team_id);
 
         if (! auth()->user()->isMemberOf($team)) {

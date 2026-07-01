@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -21,11 +20,8 @@ use Illuminate\Support\Carbon;
  * @property string $biggest_risk
  * @property string $status
  * @property bool $is_pinned
-//  * @property Carbon|null $shared_at'
  * @property \Carbon\CarbonImmutable|null $shared_at
-//  * @property Carbon|null $created_at
  * @property \Carbon\CarbonImmutable|null $created_at
-//  * @property Carbon|null $updated_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  */
 #[Fillable([
@@ -48,38 +44,38 @@ class Idea extends Model
     protected function casts(): array
     {
         return [
-            // cast to boolean so $idea->is_pinned returns true/false not 1/0
             'is_pinned' => 'boolean',
-            // cast to Carbon so we can do $idea->shared_at->diffForHumans()
             'shared_at' => 'datetime',
         ];
     }
 
+    /** @return BelongsTo<User, Idea> */
     public function user(): BelongsTo
     {
-        // The user who created this idea
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Team, Idea> */
     public function team(): BelongsTo
     {
-        // nullable — if team_id is null, this is a private idea
         return $this->belongsTo(Team::class);
     }
 
+    /** @return HasMany<IdeaVote, Idea> */
     public function votes(): HasMany
     {
         return $this->hasMany(IdeaVote::class);
     }
 
+    /** @return HasMany<Comment, Idea> */
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
+    /** @return HasMany<Hackathon, Idea> */
     public function hackathons(): HasMany
     {
-        // An idea can be linked to multiple hackathons
         return $this->hasMany(Hackathon::class);
     }
 
@@ -87,7 +83,6 @@ class Idea extends Model
 
     public function isPrivate(): bool
     {
-        // If team_id is null, the idea hasn't been shared yet
         return $this->team_id === null;
     }
 
@@ -120,8 +115,6 @@ class Idea extends Model
 
     public function upvoteCount(): int
     {
-        // counts only upvotes from the already loaded votes relationship
-        // because of automaticallyEagerLoadRelationships this won't cause N+1
         return $this->votes->where('vote', 'up')->count();
     }
 
@@ -132,14 +125,12 @@ class Idea extends Model
 
     public function voteScore(): int
     {
-        // net score: upvotes minus downvotes
-        // useful for sorting ideas by popularity
         return $this->upvoteCount() - $this->downvoteCount();
     }
 
     public function userVote(int $userId): ?string
     {
-        // returns 'up', 'down', or null if the user hasn't voted
+        /** @var IdeaVote|null $vote */
         $vote = $this->votes->firstWhere('user_id', $userId);
 
         return $vote?->vote;

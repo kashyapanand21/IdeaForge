@@ -15,17 +15,14 @@ class IdeaPolicy
 
     public function view(User $user, Idea $idea): bool
     {
-        // Owner can always view their own idea
         if ($idea->user_id === $user->id) {
             return true;
         }
 
-        // If shared to a team, any member of that team can view it
-        if ($idea->isShared()) {
+        if ($idea->isShared() && $idea->team !== null) {
             return $user->isMemberOf($idea->team);
         }
 
-        // Private idea, not the owner — deny
         return false;
     }
 

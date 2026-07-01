@@ -55,70 +55,44 @@ class Hackathon extends Model
     protected function casts(): array
     {
         return [
-            // all three are dates so we cast them to Carbon
-            // this lets us do $hackathon->ends_at->diffForHumans()
-            // or $hackathon->starts_at->isPast() etc.
             'registration_deadline' => 'datetime',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];
     }
 
+    /** @return BelongsTo<Team, Hackathon> */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /** @return BelongsTo<Idea, Hackathon> */
     public function idea(): BelongsTo
     {
-        // nullable — a hackathon may not have a linked idea yet
-        // team might still be deciding what to build
         return $this->belongsTo(Idea::class);
     }
 
+    /** @return BelongsTo<User, Hackathon> */
     public function createdBy(): BelongsTo
     {
-        // The team member who added this hackathon
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<HackathonMilestone, Hackathon> */
     public function milestones(): HasMany
     {
         return $this->hasMany(HackathonMilestone::class);
     }
 
-    // --- Status helpers ---
-
-    public function isInterested(): bool
-    {
-        return $this->status === 'interested';
-    }
-
-    public function isRegistered(): bool
-    {
-        return $this->status === 'registered';
-    }
-
-    public function isBuilding(): bool
-    {
-        return $this->status === 'building';
-    }
-
-    public function isSubmitted(): bool
-    {
-        return $this->status === 'submitted';
-    }
-
-    public function hasResults(): bool
-    {
-        return $this->status === 'results';
-    }
-
-    // --- Date helpers ---
+    public function isInterested(): bool { return $this->status === 'interested'; }
+    public function isRegistered(): bool { return $this->status === 'registered'; }
+    public function isBuilding(): bool { return $this->status === 'building'; }
+    public function isSubmitted(): bool { return $this->status === 'submitted'; }
+    public function hasResults(): bool { return $this->status === 'results'; }
 
     public function isOngoing(): bool
     {
-        // hackathon has started but not ended yet
         return $this->starts_at !== null
             && $this->starts_at->isPast()
             && $this->ends_at !== null
@@ -141,17 +115,9 @@ class Hackathon extends Model
             return null;
         }
 
-        // Carbon's diffInDays gives us the number of days between now and ends_at
         return (int) now()->diffInDays($this->ends_at);
     }
 
-    public function isOnline(): bool
-    {
-        return $this->mode === 'online';
-    }
-
-    public function isOffline(): bool
-    {
-        return $this->mode === 'offline';
-    }
+    public function isOnline(): bool { return $this->mode === 'online'; }
+    public function isOffline(): bool { return $this->mode === 'offline'; }
 }

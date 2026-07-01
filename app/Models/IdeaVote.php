@@ -23,14 +23,15 @@ class IdeaVote extends Model
     /** @use HasFactory<IdeaVoteFactory> */
     use HasFactory;
 
+    /** @return BelongsTo<Idea, IdeaVote> */
     public function idea(): BelongsTo
     {
         return $this->belongsTo(Idea::class);
     }
 
+    /** @return BelongsTo<User, IdeaVote> */
     public function user(): BelongsTo
     {
-        // The user who cast this vote
         return $this->belongsTo(User::class);
     }
 

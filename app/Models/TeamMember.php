@@ -23,15 +23,15 @@ class TeamMember extends Model
     /** @use HasFactory<TeamMemberFactory> */
     use HasFactory;
 
+    /** @return BelongsTo<Team, TeamMember> */
     public function team(): BelongsTo
     {
-        // Which team this membership belongs to
         return $this->belongsTo(Team::class);
     }
 
+    /** @return BelongsTo<User, TeamMember> */
     public function user(): BelongsTo
     {
-        // Which user this membership belongs to
         return $this->belongsTo(User::class);
     }
 
@@ -52,7 +52,6 @@ class TeamMember extends Model
 
     public function canManageTeam(): bool
     {
-        // Both owner and admin can manage team settings and idea statuses
         return in_array($this->role, ['owner', 'admin']);
     }
 }

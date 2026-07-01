@@ -30,21 +30,19 @@ class TeamInvite extends Model
     protected function casts(): array
     {
         return [
-            // tells Laravel to treat expires_at as a Carbon date object
-            // so you can do $invite->expires_at->isPast() instead of manually parsing
             'expires_at' => 'datetime',
         ];
     }
 
+    /** @return BelongsTo<Team, TeamInvite> */
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
+    /** @return BelongsTo<User, TeamInvite> */
     public function invitedBy(): BelongsTo
     {
-        // The user who sent this invite
-        // second argument is the foreign key column name on this table
         return $this->belongsTo(User::class, 'invited_by');
     }
 
@@ -60,14 +58,11 @@ class TeamInvite extends Model
 
     public function isExpired(): bool
     {
-        // Carbon makes date comparison this clean
-        // expires_at is cast to Carbon so ->isPast() just works
         return $this->expires_at !== null && $this->expires_at->isPast();
     }
 
     public function isValid(): bool
     {
-        // An invite is only usable if it's still pending AND not expired
         return $this->isPending() && ! $this->isExpired();
     }
 }

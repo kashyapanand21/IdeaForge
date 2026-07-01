@@ -25,34 +25,32 @@ class Comment extends Model
     /** @use HasFactory<CommentFactory> */
     use HasFactory;
 
+    /** @return BelongsTo<Idea, Comment> */
     public function idea(): BelongsTo
     {
         return $this->belongsTo(Idea::class);
     }
 
+    /** @return BelongsTo<User, Comment> */
     public function user(): BelongsTo
     {
-        // The user who wrote this comment
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Comment, Comment> */
     public function parent(): BelongsTo
     {
-        // If this comment is a reply, this points to the parent comment
-        // nullable — null means this is a top level comment, not a reply
         return $this->belongsTo(Comment::class, 'parent_id');
     }
 
+    /** @return HasMany<Comment, Comment> */
     public function replies(): HasMany
     {
-        // All direct replies to this comment
-        // we only go one level deep — replies cannot have replies
         return $this->hasMany(Comment::class, 'parent_id');
     }
 
     public function isReply(): bool
     {
-        // if parent_id exists, this comment is a reply to another comment
         return $this->parent_id !== null;
     }
 
@@ -63,7 +61,6 @@ class Comment extends Model
 
     public function isOwnedBy(int $userId): bool
     {
-        // useful in controllers to check before allowing edit or delete
         return $this->user_id === $userId;
     }
 }
