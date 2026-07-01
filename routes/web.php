@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\IdeaController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TeamInviteController;
@@ -62,6 +63,14 @@ Route::middleware('auth')->group(function () {
             ->name('ideas.pin');
         Route::post('/ideas/{idea}/vote', [VoteController::class, 'store'])
             ->name('ideas.vote');
+        Route::post('/ideas/{idea}/comments', [CommentController::class, 'store'])
+            ->name('comments.store');
+        Route::post('/comments/{comment}/replies', [CommentController::class, 'reply'])
+            ->name('comments.reply');
+        Route::patch('/comments/{comment}', [CommentController::class, 'update'])
+            ->name('comments.update');
+        Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])
+            ->name('comments.destroy');
 
         Route::inertia('/hackathons', 'hackathons/index')->name('hackathons.index');
         Route::inertia('/hackathons/1', 'hackathons/show')->name('hackathons.show');

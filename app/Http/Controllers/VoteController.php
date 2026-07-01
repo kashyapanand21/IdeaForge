@@ -19,7 +19,7 @@ class VoteController extends Controller
         if (RateLimiter::tooManyAttempts($key, 10)) {
             abort(429, 'Too many votes. Slow down.');
         }
-        RateLimiter::hit($key, 60); // 60 second window
+        RateLimiter::hit($key, 60);
 
         $existingVote = IdeaVote::where('user_id', $request->user()->id)
             ->where('idea_id', $idea->id)
