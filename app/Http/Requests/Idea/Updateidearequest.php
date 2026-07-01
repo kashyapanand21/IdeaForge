@@ -24,12 +24,12 @@ class UpdateIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title'        => ['sometimes', 'required', 'string', 'max:255'],
-            'problem'      => ['sometimes', 'required', 'string'],
-            'solution'     => ['sometimes', 'required', 'string'],
-            'target_user'  => ['sometimes', 'required', 'string'],
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'problem' => ['sometimes', 'required', 'string'],
+            'solution' => ['sometimes', 'required', 'string'],
+            'target_user' => ['sometimes', 'required', 'string'],
             'biggest_risk' => ['sometimes', 'required', 'string'],
-            'status'       => ['sometimes', Rule::in(['raw', 'in_discussion', 'validated', 'shelved'])],
+            'status' => ['sometimes', Rule::in(['raw', 'in_discussion', 'validated', 'shelved'])],
         ];
     }
 }

@@ -31,7 +31,7 @@ use Illuminate\Support\Carbon;
 // interface and automatically sends the verification email when fired.
 
 // class User extends Authenticatable implements MustVerifyEmail
-class User extends Authenticatable 
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;

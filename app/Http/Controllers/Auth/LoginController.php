@@ -17,10 +17,9 @@ class LoginController extends Controller
         return Inertia::render('auth/login');
     }
 
-        
     public function store(LoginRequest $request): RedirectResponse
     {
-        
+
         $credentials = $request->validated();
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
@@ -29,7 +28,6 @@ class LoginController extends Controller
             ]);
         }
 
-        
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));

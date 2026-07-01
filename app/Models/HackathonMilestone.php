@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -15,10 +16,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $title
  * @property string|null $description
  * @property string $status
- * @property \Illuminate\Support\Carbon|null $due_date
- * @property \Illuminate\Support\Carbon|null $completed_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $due_date
+ * @property Carbon|null $completed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 #[Fillable([
     'hackathon_id',
@@ -37,7 +38,7 @@ class HackathonMilestone extends Model
     protected function casts(): array
     {
         return [
-            'due_date'     => 'datetime',
+            'due_date' => 'datetime',
             // completed_at is null until the milestone is marked done
             // when marked done we store the exact timestamp
             // this lets us know not just IF it was completed but WHEN
@@ -88,7 +89,7 @@ class HackathonMilestone extends Model
         // sets both status and completed_at in one call
         // returns true/false based on whether save succeeded
         return $this->update([
-            'status'       => 'done',
+            'status' => 'done',
             'completed_at' => now(),
         ]);
     }

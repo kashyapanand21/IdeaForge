@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Idea;
+use App\Observers\IdeaObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -20,6 +22,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureModels();
+        $this->configureObservers();
     }
 
     protected function configureDefaults(): void
@@ -50,5 +53,10 @@ class AppServiceProvider extends ServiceProvider
         // Automatically eager load relationships when accessed on collections
         // prevents N+1 queries without forcing us to always remember with()
         Model::automaticallyEagerLoadRelationships();
+    }
+
+    protected function configureObservers(): void
+    {
+        Idea::observe(IdeaObserver::class);
     }
 }

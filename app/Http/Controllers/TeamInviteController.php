@@ -6,11 +6,11 @@ use App\Http\Requests\Team\InviteMemberRequest;
 use App\Models\Team;
 use App\Models\TeamInvite;
 use App\Models\TeamMember;
-use App\Models\User;
 use App\Notifications\TeamInviteNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -35,16 +35,16 @@ class TeamInviteController extends Controller
         }
 
         $invite = TeamInvite::create([
-            'team_id'    => $team->id,
+            'team_id' => $team->id,
             'invited_by' => auth()->id(),
-            'email'      => $request->email,
-            'role'       => $request->role,
-            'token'      => Str::random(32),
-            'status'     => 'pending',
+            'email' => $request->email,
+            'role' => $request->role,
+            'token' => Str::random(32),
+            'status' => 'pending',
             'expires_at' => now()->addHours(48),
         ]);
 
-        \Illuminate\Support\Facades\Notification::route('mail', $invite->email)
+        Notification::route('mail', $invite->email)
             ->notify(new TeamInviteNotification($invite));
 
         return back()->with('status', 'Invite sent.');
@@ -63,7 +63,7 @@ class TeamInviteController extends Controller
             TeamMember::create([
                 'team_id' => $invite->team_id,
                 'user_id' => $request->user()->id,
-                'role'    => $invite->role,
+                'role' => $invite->role,
             ]);
 
             $invite->update(['status' => 'accepted']);
@@ -105,7 +105,7 @@ class TeamInviteController extends Controller
 
         return Inertia::render('invites/confirm', [
             'invite' => $invite->load('team'),
-            'token'  => $token,
+            'token' => $token,
         ]);
     }
 
@@ -120,7 +120,7 @@ class TeamInviteController extends Controller
 
         return Inertia::render('invites/decline', [
             'invite' => $invite->load('team'),
-            'token'  => $token,
+            'token' => $token,
         ]);
     }
 }

@@ -16,14 +16,14 @@ class CreateIdeaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title'        => ['required', 'string', 'max:255'],
+            'title' => ['required', 'string', 'max:255'],
 
-            'problem'      => ['required', 'string'],
-            'solution'     => ['required', 'string'],
-            'target_user'  => ['required', 'string'],
+            'problem' => ['required', 'string'],
+            'solution' => ['required', 'string'],
+            'target_user' => ['required', 'string'],
             'biggest_risk' => ['required', 'string'],
 
-            'status'       => ['sometimes', Rule::in(['raw', 'in_discussion', 'validated', 'shelved'])],
+            'status' => ['sometimes', Rule::in(['raw', 'in_discussion', 'validated', 'shelved'])],
         ];
     }
 }

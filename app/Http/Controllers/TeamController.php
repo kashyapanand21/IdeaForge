@@ -33,8 +33,8 @@ class TeamController extends Controller
         // DB::transaction ensures both inserts happen or neither does
         $team = DB::transaction(function () use ($request): Team {
             $team = Team::create([
-                'owner_id'    => auth()->id(),
-                'name'        => $request->name,
+                'owner_id' => auth()->id(),
+                'name' => $request->name,
                 'description' => $request->description,
             ]);
 
@@ -42,7 +42,7 @@ class TeamController extends Controller
             TeamMember::create([
                 'team_id' => $team->id,
                 'user_id' => auth()->id(),
-                'role'    => 'owner',
+                'role' => 'owner',
             ]);
 
             return $team;
@@ -69,7 +69,7 @@ class TeamController extends Controller
         $this->authorize('update', $team);
 
         return Inertia::render('teams/settings', [
-            'team'    => $team->load('members'),
+            'team' => $team->load('members'),
             'invites' => $team->invites()->where('status', 'pending')->get(),
         ]);
     }

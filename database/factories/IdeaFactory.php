@@ -15,31 +15,30 @@ class IdeaFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id'      => User::factory(),
+            'user_id' => User::factory(),
 
-            'team_id'      => null,
+            'team_id' => null,
 
-            'title'        => fake()->sentence(4, false),
+            'title' => fake()->sentence(4, false),
 
-            'problem'      => fake()->paragraph(),
-            'solution'     => fake()->paragraph(),
-            'target_user'  => fake()->sentence(),
+            'problem' => fake()->paragraph(),
+            'solution' => fake()->paragraph(),
+            'target_user' => fake()->sentence(),
             'biggest_risk' => fake()->sentence(),
 
-            'status'       => 'raw',
+            'status' => 'raw',
 
-            'is_pinned'    => false,
+            'is_pinned' => false,
 
-            'shared_at'    => null,
+            'shared_at' => null,
         ];
     }
-
 
     // Use: Idea::factory()->shared($team)->create()
     public function shared(Team $team): static
     {
         return $this->state([
-            'team_id'   => $team->id,
+            'team_id' => $team->id,
             'shared_at' => now(),
         ]);
     }

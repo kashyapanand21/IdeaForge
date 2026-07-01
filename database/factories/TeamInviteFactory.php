@@ -16,12 +16,12 @@ class TeamInviteFactory extends Factory
     public function definition(): array
     {
         return [
-            'team_id'    => Team::factory(),
+            'team_id' => Team::factory(),
             'invited_by' => User::factory(),
-            'email'      => fake()->safeEmail(),
-            'role'       => 'member',
-            'token'      => Str::random(32),
-            'status'     => 'pending',
+            'email' => fake()->safeEmail(),
+            'role' => 'member',
+            'token' => Str::random(32),
+            'status' => 'pending',
             'expires_at' => now()->addHours(48),
         ];
     }

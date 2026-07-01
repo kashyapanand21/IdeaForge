@@ -16,10 +16,10 @@ class TeamFactory extends Factory
         return [
             // owner_id will usually be overridden in tests
             // but we need a fallback so the factory works standalone
-            'owner_id'    => User::factory(),
-            'name'        => fake()->words(3, true),
+            'owner_id' => User::factory(),
+            'name' => fake()->words(3, true),
             'description' => fake()->sentence(),
-            'avatar'      => null,
+            'avatar' => null,
         ];
     }
 }

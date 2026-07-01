@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -15,8 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $user_id
  * @property int|null $parent_id
  * @property string $body
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 #[Fillable(['idea_id', 'user_id', 'parent_id', 'body'])]
 class Comment extends Model

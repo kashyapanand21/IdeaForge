@@ -25,7 +25,7 @@ class IdeaController extends Controller
 
         return Inertia::render('ideas/index', [
             'privateIdeas' => $privateIdeas,
-            'sharedIdeas'  => $sharedIdeas,
+            'sharedIdeas' => $sharedIdeas,
         ]);
     }
 
@@ -43,14 +43,14 @@ class IdeaController extends Controller
     {
         $idea = Idea::create([
             // user_id comes from auth, never from the request
-            'user_id'      => auth()->id(),
-            'title'        => $request->title,
-            'problem'      => $request->problem,
-            'solution'     => $request->solution,
-            'target_user'  => $request->target_user,
+            'user_id' => auth()->id(),
+            'title' => $request->title,
+            'problem' => $request->problem,
+            'solution' => $request->solution,
+            'target_user' => $request->target_user,
             'biggest_risk' => $request->biggest_risk,
             // default to raw if status not sent
-            'status'       => $request->input('status', 'raw'),
+            'status' => $request->input('status', 'raw'),
         ]);
 
         return redirect()->route('ideas.show', $idea)
@@ -78,7 +78,7 @@ class IdeaController extends Controller
         $teams = auth()->user()->teams()->get();
 
         return Inertia::render('ideas/edit', [
-            'idea'  => $idea,
+            'idea' => $idea,
             'teams' => $teams,
         ]);
     }
@@ -114,7 +114,6 @@ class IdeaController extends Controller
             'team_id' => ['required', 'integer', 'exists:teams,id'],
         ]);
 
-        // Verify the user actually belongs to the team they're sharing to
         $team = Team::findOrFail($request->team_id);
 
         if (! auth()->user()->isMemberOf($team)) {
@@ -122,11 +121,7 @@ class IdeaController extends Controller
         }
 
         $idea->update([
-            'team_id'   => $team->id,
-            // shared_at records when the idea was first shared
-            // the Observer we build later will handle this automatically
-            // for now we set it manually
-            'shared_at' => now(),
+            'team_id' => $team->id,
         ]);
 
         return redirect()->route('ideas.show', $idea)

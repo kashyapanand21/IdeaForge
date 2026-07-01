@@ -17,7 +17,7 @@ class TeamMemberFactory extends Factory
         return [
             'team_id' => Team::factory(),
             'user_id' => User::factory(),
-            'role'    => 'member',
+            'role' => 'member',
         ];
     }
 

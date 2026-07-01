@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -23,11 +24,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $team_size
  * @property string|null $prize_pool
  * @property string $status
- * @property \Illuminate\Support\Carbon|null $registration_deadline
- * @property \Illuminate\Support\Carbon|null $starts_at
- * @property \Illuminate\Support\Carbon|null $ends_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $registration_deadline
+ * @property Carbon|null $starts_at
+ * @property Carbon|null $ends_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 #[Fillable([
     'team_id',
@@ -58,8 +59,8 @@ class Hackathon extends Model
             // this lets us do $hackathon->ends_at->diffForHumans()
             // or $hackathon->starts_at->isPast() etc.
             'registration_deadline' => 'datetime',
-            'starts_at'             => 'datetime',
-            'ends_at'               => 'datetime',
+            'starts_at' => 'datetime',
+            'ends_at' => 'datetime',
         ];
     }
 

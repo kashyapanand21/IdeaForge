@@ -16,12 +16,12 @@ test('ideas index renders for authenticated user', function () {
 });
 
 test('ideas index is split into private and shared', function () {
-    $user  = User::factory()->create();
-    $team  = Team::factory()->create(['owner_id' => $user->id]);
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => 'owner']);
 
     $privateIdea = Idea::factory()->create(['user_id' => $user->id]);
-    $sharedIdea  = Idea::factory()->shared($team)->create(['user_id' => $user->id]);
+    $sharedIdea = Idea::factory()->shared($team)->create(['user_id' => $user->id]);
 
     $this->actingAs($user)
         ->get(route('ideas.index'))
@@ -54,42 +54,42 @@ test('user can create an idea', function () {
 
     $this->actingAs($user)
         ->post(route('ideas.store'), [
-            'title'        => 'My Test Idea',
-            'problem'      => 'A real problem exists here.',
-            'solution'     => 'Here is how we solve it.',
-            'target_user'  => 'Developers who need this.',
+            'title' => 'My Test Idea',
+            'problem' => 'A real problem exists here.',
+            'solution' => 'Here is how we solve it.',
+            'target_user' => 'Developers who need this.',
             'biggest_risk' => 'Nobody wants it.',
         ])
         ->assertRedirect();
 
     // Verify the idea was saved to the database with correct owner
     $this->assertDatabaseHas('ideas', [
-        'title'   => 'My Test Idea',
+        'title' => 'My Test Idea',
         'user_id' => $user->id,
         // private by default — team_id must be null
         'team_id' => null,
-        'status'  => 'raw',
+        'status' => 'raw',
     ]);
 });
 
 test('store sets user_id from auth not from request', function () {
-    $user      = User::factory()->create();
+    $user = User::factory()->create();
     $otherUser = User::factory()->create();
 
     $this->actingAs($user)
         ->post(route('ideas.store'), [
             // attacker tries to assign idea to another user
-            'user_id'      => $otherUser->id,
-            'title'        => 'Hijacked Idea',
-            'problem'      => 'Some problem.',
-            'solution'     => 'Some solution.',
-            'target_user'  => 'Someone.',
+            'user_id' => $otherUser->id,
+            'title' => 'Hijacked Idea',
+            'problem' => 'Some problem.',
+            'solution' => 'Some solution.',
+            'target_user' => 'Someone.',
             'biggest_risk' => 'Some risk.',
         ]);
 
     // idea must belong to the authenticated user, not the injected one
     $this->assertDatabaseHas('ideas', [
-        'title'   => 'Hijacked Idea',
+        'title' => 'Hijacked Idea',
         'user_id' => $user->id,
     ]);
 });
@@ -107,12 +107,12 @@ test('store rejects invalid status', function () {
 
     $this->actingAs($user)
         ->post(route('ideas.store'), [
-            'title'        => 'My Idea',
-            'problem'      => 'Problem.',
-            'solution'     => 'Solution.',
-            'target_user'  => 'Target.',
+            'title' => 'My Idea',
+            'problem' => 'Problem.',
+            'solution' => 'Solution.',
+            'target_user' => 'Target.',
             'biggest_risk' => 'Risk.',
-            'status'       => 'invalid_status',
+            'status' => 'invalid_status',
         ])
         ->assertSessionHasErrors('status');
 });
@@ -129,9 +129,9 @@ test('owner can view their private idea', function () {
 });
 
 test('team member can view a shared idea', function () {
-    $owner  = User::factory()->create();
+    $owner = User::factory()->create();
     $member = User::factory()->create();
-    $team   = Team::factory()->create(['owner_id' => $owner->id]);
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
 
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $member->id, 'role' => 'member']);
@@ -144,9 +144,9 @@ test('team member can view a shared idea', function () {
 });
 
 test('outsider cannot view a private idea', function () {
-    $owner    = User::factory()->create();
+    $owner = User::factory()->create();
     $outsider = User::factory()->create();
-    $idea     = Idea::factory()->create(['user_id' => $owner->id]);
+    $idea = Idea::factory()->create(['user_id' => $owner->id]);
 
     $this->actingAs($outsider)
         ->get(route('ideas.show', $idea))
@@ -154,9 +154,9 @@ test('outsider cannot view a private idea', function () {
 });
 
 test('outsider cannot view a shared idea they are not a member of', function () {
-    $owner    = User::factory()->create();
+    $owner = User::factory()->create();
     $outsider = User::factory()->create();
-    $team     = Team::factory()->create(['owner_id' => $owner->id]);
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
 
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
 
@@ -180,15 +180,15 @@ test('owner can update their idea', function () {
         ->assertRedirect(route('ideas.show', $idea));
 
     $this->assertDatabaseHas('ideas', [
-        'id'    => $idea->id,
+        'id' => $idea->id,
         'title' => 'Updated Title',
     ]);
 });
 
 test('non-owner cannot update an idea', function () {
-    $owner    = User::factory()->create();
+    $owner = User::factory()->create();
     $outsider = User::factory()->create();
-    $idea     = Idea::factory()->create(['user_id' => $owner->id]);
+    $idea = Idea::factory()->create(['user_id' => $owner->id]);
 
     $this->actingAs($outsider)
         ->patch(route('ideas.update', $idea), [
@@ -211,9 +211,9 @@ test('owner can delete their idea', function () {
 });
 
 test('non-owner cannot delete an idea', function () {
-    $owner    = User::factory()->create();
+    $owner = User::factory()->create();
     $outsider = User::factory()->create();
-    $idea     = Idea::factory()->create(['user_id' => $owner->id]);
+    $idea = Idea::factory()->create(['user_id' => $owner->id]);
 
     $this->actingAs($outsider)
         ->delete(route('ideas.destroy', $idea))
@@ -234,15 +234,15 @@ test('owner can share idea to their team', function () {
         ->assertRedirect(route('ideas.show', $idea));
 
     $this->assertDatabaseHas('ideas', [
-        'id'      => $idea->id,
+        'id' => $idea->id,
         'team_id' => $team->id,
     ]);
 });
 
 test('owner cannot share idea to a team they do not belong to', function () {
-    $user      = User::factory()->create();
+    $user = User::factory()->create();
     $otherTeam = Team::factory()->create();
-    $idea      = Idea::factory()->create(['user_id' => $user->id]);
+    $idea = Idea::factory()->create(['user_id' => $user->id]);
 
     $this->actingAs($user)
         ->post(route('ideas.share', $idea), ['team_id' => $otherTeam->id])
@@ -250,14 +250,35 @@ test('owner cannot share idea to a team they do not belong to', function () {
 });
 
 test('non-owner cannot share an idea', function () {
-    $owner    = User::factory()->create();
+    $owner = User::factory()->create();
     $outsider = User::factory()->create();
-    $team     = Team::factory()->create(['owner_id' => $owner->id]);
-    $idea     = Idea::factory()->create(['user_id' => $owner->id]);
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    $idea = Idea::factory()->create(['user_id' => $owner->id]);
 
     $this->actingAs($outsider)
         ->post(route('ideas.share', $idea), ['team_id' => $team->id])
         ->assertForbidden();
+});
+
+test('sharing an idea automatically sets shared_at via observer', function () {
+    $user = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $user->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $user->id, 'role' => 'owner']);
+
+    $idea = Idea::factory()->create(['user_id' => $user->id]);
+
+    // Prove shared_at is null BEFORE sharing — this is the "baseline" check
+    expect($idea->shared_at)->toBeNull();
+
+    $this->actingAs($user)
+        ->post(route('ideas.share', $idea), ['team_id' => $team->id])
+        ->assertRedirect(route('ideas.show', $idea));
+
+    // Reload from the database — $idea in memory is stale, it doesn't know
+    // about changes the Observer made during the HTTP request
+    $idea->refresh();
+
+    expect($idea->shared_at)->not->toBeNull();
 });
 
 // ── Change Status ─────────────────────────────────────────────────────────────
@@ -271,7 +292,7 @@ test('owner can change idea status', function () {
         ->assertRedirect();
 
     $this->assertDatabaseHas('ideas', [
-        'id'     => $idea->id,
+        'id' => $idea->id,
         'status' => 'in_discussion',
     ]);
 });
@@ -279,7 +300,7 @@ test('owner can change idea status', function () {
 test('team admin can change status of shared idea', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
-    $team  = Team::factory()->create(['owner_id' => $owner->id]);
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
 
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $admin->id, 'role' => 'admin']);
@@ -294,9 +315,9 @@ test('team admin can change status of shared idea', function () {
 });
 
 test('regular member cannot change status of shared idea', function () {
-    $owner  = User::factory()->create();
+    $owner = User::factory()->create();
     $member = User::factory()->create();
-    $team   = Team::factory()->create(['owner_id' => $owner->id]);
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
 
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $member->id, 'role' => 'member']);
@@ -334,9 +355,9 @@ test('cannot pin a private idea', function () {
 });
 
 test('regular member cannot pin an idea', function () {
-    $owner  = User::factory()->create();
+    $owner = User::factory()->create();
     $member = User::factory()->create();
-    $team   = Team::factory()->create(['owner_id' => $owner->id]);
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
 
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
     TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $member->id, 'role' => 'member']);
