@@ -1,10 +1,12 @@
 <?php
 
+use App\Events\IdeaVoted;
 use App\Models\Idea;
 use App\Models\IdeaVote;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 
 test('team member can upvote a shared idea', function () {
     $user = User::factory()->create();
@@ -112,4 +114,60 @@ test('cannot vote on a private idea', function () {
     $this->actingAs($user)
         ->post(route('ideas.vote', $idea), ['vote' => 'up'])
         ->assertForbidden();
+});
+
+test('voting dispatches IdeaVoted event', function () {
+    Event::fake();
+
+    $owner = User::factory()->create();
+    $voter = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $voter->id, 'role' => 'member']);
+    $idea = Idea::factory()->shared($team)->create(['user_id' => $owner->id]);
+
+    $this->actingAs($voter)->post(route('ideas.vote', $idea), ['vote' => 'up']);
+
+    Event::assertDispatched(IdeaVoted::class, fn ($event) => $event->vote->idea_id === $idea->id);
+});
+
+test('toggling a vote off does not dispatch IdeaVoted', function () {
+    $owner = User::factory()->create();
+    $voter = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $voter->id, 'role' => 'member']);
+    $idea = Idea::factory()->shared($team)->create(['user_id' => $owner->id]);
+
+    $this->actingAs($voter)->post(route('ideas.vote', $idea), ['vote' => 'up']);
+
+    Event::fake();
+
+    $this->actingAs($voter)->post(route('ideas.vote', $idea), ['vote' => 'up']);
+
+    Event::assertNotDispatched(IdeaVoted::class);
+});
+
+test('idea owner receives a database notification when someone votes', function () {
+    $owner = User::factory()->create();
+    $voter = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $voter->id, 'role' => 'member']);
+    $idea = Idea::factory()->shared($team)->create(['user_id' => $owner->id]);
+
+    $this->actingAs($voter)->post(route('ideas.vote', $idea), ['vote' => 'up']);
+
+    expect($owner->fresh()->notifications()->count())->toBe(1);
+});
+
+test('idea owner does not get notified when voting on their own idea', function () {
+    $owner = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
+    $idea = Idea::factory()->shared($team)->create(['user_id' => $owner->id]);
+
+    $this->actingAs($owner)->post(route('ideas.vote', $idea), ['vote' => 'up']);
+
+    expect($owner->fresh()->notifications()->count())->toBe(0);
 });

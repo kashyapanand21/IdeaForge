@@ -192,3 +192,29 @@ test('posting a comment dispatches CommentPosted event', function () {
             && $event->comment->user_id === $user->id;
     });
 });
+
+test('idea owner receives a database notification when someone comments', function () {
+    $owner = User::factory()->create();
+    $commenter = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $commenter->id, 'role' => 'member']);
+    $idea = Idea::factory()->shared($team)->create(['user_id' => $owner->id]);
+
+    $this->actingAs($commenter)
+        ->post(route('comments.store', $idea), ['body' => 'Nice idea']);
+
+    expect($owner->fresh()->notifications()->count())->toBe(1);
+});
+
+test('idea owner does not get notified when commenting on their own idea', function () {
+    $owner = User::factory()->create();
+    $team = Team::factory()->create(['owner_id' => $owner->id]);
+    TeamMember::factory()->create(['team_id' => $team->id, 'user_id' => $owner->id, 'role' => 'owner']);
+    $idea = Idea::factory()->shared($team)->create(['user_id' => $owner->id]);
+
+    $this->actingAs($owner)
+        ->post(route('comments.store', $idea), ['body' => 'My own comment']);
+
+    expect($owner->fresh()->notifications()->count())->toBe(0);
+});

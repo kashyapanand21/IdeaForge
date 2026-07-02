@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\IdeaVoted;
 use App\Http\Requests\VoteRequest;
 use App\Models\Idea;
 use App\Models\IdeaVote;
@@ -15,7 +16,6 @@ class VoteController extends Controller
         $this->authorize('vote', $idea);
 
         $key = 'vote:'.$request->user()->id;
-
         if (RateLimiter::tooManyAttempts($key, 10)) {
             abort(429, 'Too many votes. Slow down.');
         }
@@ -26,22 +26,24 @@ class VoteController extends Controller
             ->first();
 
         if (! $existingVote) {
-            IdeaVote::create([
+            $vote = IdeaVote::create([
                 'user_id' => $request->user()->id,
                 'idea_id' => $idea->id,
                 'vote' => $request->validated('vote'),
             ]);
+            IdeaVoted::dispatch($vote);
 
             return back();
         }
 
         if ($existingVote->vote === $request->validated('vote')) {
-            $existingVote->delete(); // toggle off
+            $existingVote->delete(); // toggle off — no notification
 
             return back();
         }
 
         $existingVote->update(['vote' => $request->validated('vote')]);
+        IdeaVoted::dispatch($existingVote);
 
         return back();
     }
